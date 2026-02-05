@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Calibração - MQB-QGI (Nuvem)</title>
+    <title>Gestão de Calibração - LAB MQB-QGI</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -67,7 +67,6 @@
 
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); display:flex; justify-content:center; align-items:center; z-index:9999; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -77,10 +76,10 @@
     <script type="text/babel">
         // --- ÍCONES ---
         const Icon = ({ children, className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>;
-        const Beaker = () => <Icon className="w-5 h-5"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><line x1="6" y1="14" x2="18" y2="14"/></Icon>; // Vidraria Geral/Pipeta
-        const Pipette = () => <Icon className="w-5 h-5"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.9.9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.9.9"/></Icon>; // Micropipeta
-        const Flask = () => <Icon className="w-5 h-5"><path d="M6 21h12a1 1 0 0 0 1-1v-2a1 1 0 0 0-.08-.38L16 11a2 2 0 0 1 0-1.62V4a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v5.38a2 2 0 0 1 0 1.62l-2.92 6.62A1 1 0 0 0 5 18v2a1 1 0 0 0 1 1Z"/><path d="M10 2h4"/></Icon>; // Balão
-        const TestTube = () => <Icon className="w-5 h-5"><path d="M21 7 7 21"/><path d="M18 10 10 18"/><path d="M6 14v7a1 1 0 0 0 1 1h7"/><path d="M14 6h7"/></Icon>; // Bureta (adaptado)
+        const Beaker = () => <Icon className="w-5 h-5"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><line x1="6" y1="14" x2="18" y2="14"/></Icon>; 
+        const Pipette = () => <Icon className="w-5 h-5"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.9.9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.9.9"/></Icon>; 
+        const Flask = () => <Icon className="w-5 h-5"><path d="M6 21h12a1 1 0 0 0 1-1v-2a1 1 0 0 0-.08-.38L16 11a2 2 0 0 1 0-1.62V4a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v5.38a2 2 0 0 1 0 1.62l-2.92 6.62A1 1 0 0 0 5 18v2a1 1 0 0 0 1 1Z"/><path d="M10 2h4"/></Icon>; 
+        const TestTube = () => <Icon className="w-5 h-5"><path d="M21 7 7 21"/><path d="M18 10 10 18"/><path d="M6 14v7a1 1 0 0 0 1 1h7"/><path d="M14 6h7"/></Icon>; 
         const Cloud = ({color}) => <Icon className={`w-5 h-5 ${color}`}><path d="M17.5 19c0-3.037-2.463-5.5-5.5-5.5S6.5 15.963 6.5 19"/><path d="M17.5 19h2a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 0-5 0 2.5 2.5 0 0 0-5 0 2.5 2.5 0 0 0 0 5 2.5 2.5 0 0 0 0 5h2"/></Icon>;
         const Trash2 = () => <Icon className="w-4 h-4"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></Icon>;
         const Edit2 = () => <Icon className="w-4 h-4"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></Icon>;
@@ -121,10 +120,8 @@
                         try {
                             await signInAnonymously(auth);
                         } catch (authErr) {
-                            console.error("Erro no Login Anônimo:", authErr);
                             if (authErr.code === 'auth/configuration-not-found' || authErr.code === 'auth/operation-not-allowed') {
                                 setErrorMsg("AÇÃO NECESSÁRIA: Ative o 'Login Anônimo' no Firebase Console em Authentication > Sign-in method.");
-                                setStatus("Erro de Configuração");
                                 return;
                             }
                             throw authErr;
@@ -145,7 +142,6 @@
                                     setItems(loadedItems);
                                     setStatus(""); 
                                 }, (error) => {
-                                    console.error("Erro no listener:", error);
                                     if (error.code === 'permission-denied') {
                                          setErrorMsg("Permissão Negada: Verifique se as Regras do Firestore estão em modo de teste (público).");
                                     } else {
@@ -161,7 +157,7 @@
                             }
                         });
                     } catch (err) {
-                        console.error("Erro geral na inicialização:", err);
+                        console.error("Erro geral:", err);
                         setStatus("Erro ao conectar no Firebase.");
                         setErrorMsg(err.message);
                     }
@@ -177,7 +173,7 @@
             // --- ESTADO DO FORMULÁRIO ---
             const initialFormState = {
                 categoria: 'micropipeta',
-                subcategoria: 'pipeta', // Agora começa com pipeta
+                subcategoria: 'pipeta',
                 customCategoryName: '',
                 nome: '',
                 tag: '',
@@ -186,12 +182,12 @@
                 quantidade: '1',
                 // Micropipetas
                 calibracaoPairs: [{ ponto: '', criterio: '' }],
-                // Vidrarias Específicas
+                // Vidrarias
                 divisao: '',
-                erro: '', // Usado para proveta
-                erroA: '', // Classe A
-                erroB: '', // Classe B
-                forma: 'alta',
+                erroA: '', 
+                erroB: '', 
+                erroAlta: '', // Proveta Forma Alta
+                erroBaixa: '', // Proveta Forma Baixa
                 imhoffPoints: [...IMHOFF_DEFAULTS] 
             };
 
@@ -224,7 +220,7 @@
                 if(sub === 'imhoff') novoNome = 'Cone de Imhoff';
                 if(sub === 'proveta') novoNome = 'Proveta Graduada';
                 setFormData({ 
-                    ...initialFormState, // Limpa campos antigos
+                    ...initialFormState, 
                     categoria: formData.categoria, 
                     subcategoria: sub, 
                     nome: novoNome 
@@ -264,7 +260,7 @@
                     setFormData({ ...initialFormState, categoria: formData.categoria, subcategoria: formData.subcategoria });
                 } catch (error) {
                     console.error("Erro ao salvar:", error);
-                    alert("Erro ao salvar. Verifique se o banco de dados está no 'Modo Teste'.");
+                    alert("Erro ao salvar.");
                 }
             };
 
@@ -293,9 +289,9 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
-            // --- EXPORTAÇÃO ---
+            // --- EXPORTAÇÃO CSV ---
             const generateCSV = () => {
-                const headers = ["Categoria", "Subcategoria", "Item", "Tipo/Classe", "Capacidade", "Qtd", "Detalhes Técnicos"];
+                const headers = ["Categoria", "Subcategoria", "Item", "Tipo", "Capacidade", "Qtd", "Detalhes Técnicos"];
                 const rows = items.map(item => {
                     let detalhes = '';
                     let sub = item.subcategoria;
@@ -303,23 +299,11 @@
                         sub = 'Micropipeta/Dispenser';
                         detalhes = (item.calibracaoPairs || []).map(p => `P: ${p.ponto} (Crit: ${p.criterio})`).join(' | ');
                     } else {
-                        // Vidrarias
-                        if (sub === 'pipeta') {
-                            sub = 'Pipeta';
-                            detalhes = `Erro A/AS: ±${item.erroA} | Erro B: ±${item.erroB}`;
-                        } else if (sub === 'balao') {
-                            sub = 'Balão Volumétrico';
-                            detalhes = `Erro A: ±${item.erroA}`;
-                        } else if (sub === 'bureta') {
-                            sub = 'Bureta de Vidro';
-                            detalhes = `Div: ${item.divisao} | Erro A/AS: ±${item.erroA} | Erro B: ±${item.erroB}`;
-                        } else if (sub === 'proveta') {
-                            sub = 'Proveta';
-                            detalhes = `Div: ${item.divisao} | Erro: ±${item.erro} | Forma: ${item.forma}`;
-                        } else if (sub === 'imhoff') {
-                            sub = 'Cone Imhoff';
-                            detalhes = `Faixas: ${(item.imhoffPoints || []).join(' | ')}`;
-                        }
+                        if (sub === 'pipeta') detalhes = `Erro A/AS: ±${item.erroA} | Erro B: ±${item.erroB}`;
+                        else if (sub === 'balao') detalhes = `Erro A: ±${item.erroA}`;
+                        else if (sub === 'bureta') detalhes = `Div: ${item.divisao} | Erro A/AS: ±${item.erroA} | Erro B: ±${item.erroB}`;
+                        else if (sub === 'proveta') detalhes = `Div: ${item.divisao} | Erro Alta: ±${item.erroAlta} | Erro Baixa: ±${item.erroBaixa}`;
+                        else if (sub === 'imhoff') detalhes = `Faixas: ${(item.imhoffPoints || []).join(' | ')}`;
                     }
                     const escape = (t) => `"${(t||'').toString().replace(/"/g, '""')}"`;
                     return [
@@ -339,15 +323,19 @@
                 document.body.appendChild(link); link.click(); document.body.removeChild(link);
             };
 
+            // --- EXPORTAÇÃO PDF ---
             const generatePDF = () => {
                 if (!window.jspdf) return alert("Carregando libs...");
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
                 doc.setFontSize(16); doc.setTextColor(40); doc.text("Solicitação de Calibração", 14, 20);
-                doc.setFontSize(10); doc.setTextColor(100); doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 26);
+                doc.setFontSize(10); doc.setTextColor(100); doc.text("LAB MQB-QGI", 14, 26);
+                doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 31);
                 
-                let lastY = 35;
+                let lastY = 40;
+                
+                // Micropipetas
                 const micros = items.filter(i => i.categoria === 'micropipeta');
                 if (micros.length > 0) {
                     doc.text("Micropipetas / Dispensers", 14, lastY);
@@ -359,6 +347,7 @@
                     lastY = doc.lastAutoTable.finalY + 10;
                 }
                 
+                // Vidrarias
                 const vidros = items.filter(i => i.categoria === 'vidraria');
                 if (vidros.length > 0) {
                     doc.text("Vidrarias", 14, lastY);
@@ -369,8 +358,8 @@
                             if (i.subcategoria === 'pipeta') det = `Erro A/AS: ±${i.erroA}\nErro B: ±${i.erroB}`;
                             else if (i.subcategoria === 'balao') det = `Erro A: ±${i.erroA}`;
                             else if (i.subcategoria === 'bureta') det = `Div: ${i.divisao}\nErro A/AS: ±${i.erroA}\nErro B: ±${i.erroB}`;
-                            else if (i.subcategoria === 'proveta') det = `Div: ${i.divisao}\nErro: ±${i.erro}\nForma: ${i.forma}`;
-                            else if (i.subcategoria === 'imhoff') det = 'Ver faixas padrão';
+                            else if (i.subcategoria === 'proveta') det = `Div: ${i.divisao}\nErro Alta: ±${i.erroAlta}\nErro Baixa: ±${i.erroBaixa}`;
+                            else if (i.subcategoria === 'imhoff') det = (i.imhoffPoints || []).join('\n');
                             
                             return [
                                 `${i.nome} (${i.subcategoria})`, 
@@ -383,7 +372,7 @@
                         startY: lastY + 2, theme: 'grid'
                     });
                 }
-                doc.save(`Pedido_Calibracao_${new Date().toISOString().slice(0,10)}.pdf`);
+                doc.save(`Pedido_Calibracao_MQB_${new Date().toISOString().slice(0,10)}.pdf`);
             };
 
             // --- RENDER ---
@@ -393,27 +382,21 @@
                     {errorMsg && (
                         <div className="fixed top-0 left-0 w-full bg-red-600 text-white p-4 z-50 shadow-lg flex items-center justify-center gap-3">
                             <AlertTriangle className="text-white w-8 h-8" />
-                            <div>
-                                <p className="font-bold text-lg">Atenção</p>
-                                <p className="text-sm">{errorMsg}</p>
-                            </div>
+                            <div><p className="font-bold text-lg">Atenção</p><p className="text-sm">{errorMsg}</p></div>
                         </div>
                     )}
                     
                     {status && !errorMsg && (
-                        <div className="fixed top-0 left-0 w-full bg-yellow-100 text-yellow-800 text-center text-xs py-1 z-40">
-                            {status}
-                        </div>
+                        <div className="fixed top-0 left-0 w-full bg-yellow-100 text-yellow-800 text-center text-xs py-1 z-40">{status}</div>
                     )}
 
                     <header className={`bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 mb-6 ${errorMsg ? 'mt-16' : 'mt-4'}`}>
                         <div className="flex items-center gap-3">
                             <div className="bg-slate-800 p-3 rounded-lg text-white"><Beaker /></div>
                             <div>
-                                <h1 className="text-2xl font-bold text-slate-900">MQB-QGI</h1>
+                                <h1 className="text-2xl font-bold text-slate-900">LAB MQB-QGI</h1>
                                 <p className={`text-sm flex items-center gap-1 font-medium ${isOnline ? 'text-green-600' : 'text-slate-400'}`}>
-                                    <Cloud color={isOnline ? 'text-green-600' : 'text-slate-400'} /> 
-                                    {isOnline ? "Conectado" : "Conectando..."}
+                                    <Cloud color={isOnline ? 'text-green-600' : 'text-slate-400'} /> {isOnline ? "Conectado" : "Conectando..."}
                                 </p>
                             </div>
                         </div>
@@ -456,7 +439,7 @@
                                     
                                     <div><label className="text-xs font-bold text-slate-500 block mb-1">Nome do Item</label><input required placeholder="Descrição" value={formData.nome} onChange={handleInputChange} name="nome" className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"/></div>
 
-                                    {/* --- CAMPOS ESPECÍFICOS DE MICROPIPETA --- */}
+                                    {/* --- MICROPIPETA --- */}
                                     {formData.categoria === 'micropipeta' && (
                                         <>
                                             <div className="grid grid-cols-2 gap-2">
@@ -477,79 +460,89 @@
                                         </>
                                     )}
 
-                                    {/* --- CAMPOS ESPECÍFICOS DE VIDRARIAS --- */}
-                                    
-                                    {/* Pipeta */}
-                                    {formData.subcategoria === 'pipeta' && (
-                                        <div className="bg-slate-50 p-3 rounded border border-slate-200 space-y-2">
-                                            <div><label className="text-xs font-bold text-slate-500 block mb-1">Capacidade (mL)</label><input placeholder="Ex: 10" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-sm"/></div>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div><label className="text-xs font-bold text-slate-500 block mb-1">Erro A/AS (±)</label><input placeholder="mL" value={formData.erroA} onChange={handleInputChange} name="erroA" className="w-full p-2 border rounded text-sm"/></div>
-                                                <div><label className="text-xs font-bold text-slate-500 block mb-1">Erro B (±)</label><input placeholder="mL" value={formData.erroB} onChange={handleInputChange} name="erroB" className="w-full p-2 border rounded text-sm"/></div>
-                                            </div>
-                                        </div>
-                                    )}
+                                    {/* --- VIDRARIAS (SÓ APARECE SE CATEGORIA FOR VIDRARIA) --- */}
+                                    {formData.categoria === 'vidraria' && (
+                                        <>
+                                            {/* Pipeta */}
+                                            {formData.subcategoria === 'pipeta' && (
+                                                <div className="bg-slate-50 p-3 rounded border border-slate-200 space-y-2">
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div><label className="text-xs font-bold text-slate-500 block mb-1">Tipo</label><input placeholder="Ex: A" value={formData.tipo} onChange={handleInputChange} name="tipo" className="w-full p-2 border rounded text-sm"/></div>
+                                                        <div><label className="text-xs font-bold text-slate-500 block mb-1">Capacidade (mL)</label><input placeholder="Ex: 10" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-sm"/></div>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div><label className="text-xs font-bold text-slate-500 block mb-1">Erro A/AS (±)</label><input placeholder="mL" value={formData.erroA} onChange={handleInputChange} name="erroA" className="w-full p-2 border rounded text-sm"/></div>
+                                                        <div><label className="text-xs font-bold text-slate-500 block mb-1">Erro B (±)</label><input placeholder="mL" value={formData.erroB} onChange={handleInputChange} name="erroB" className="w-full p-2 border rounded text-sm"/></div>
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                    {/* Balão Volumétrico */}
-                                    {formData.subcategoria === 'balao' && (
-                                        <div className="bg-slate-50 p-3 rounded border border-slate-200 space-y-2">
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div><label className="text-xs font-bold text-slate-500 block mb-1">Tipo</label><input placeholder="Ex: Vidro/PP" value={formData.tipo} onChange={handleInputChange} name="tipo" className="w-full p-2 border rounded text-sm"/></div>
-                                                <div><label className="text-xs font-bold text-slate-500 block mb-1">Capacidade (mL)</label><input placeholder="Ex: 100" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-sm"/></div>
-                                            </div>
-                                            <div><label className="text-xs font-bold text-slate-500 block mb-1">Erro A (±)</label><input placeholder="mL" value={formData.erroA} onChange={handleInputChange} name="erroA" className="w-full p-2 border rounded text-sm"/></div>
-                                        </div>
-                                    )}
+                                            {/* Balão */}
+                                            {formData.subcategoria === 'balao' && (
+                                                <div className="bg-slate-50 p-3 rounded border border-slate-200 space-y-2">
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div><label className="text-xs font-bold text-slate-500 block mb-1">Tipo</label><input placeholder="Ex: Vidro/PP" value={formData.tipo} onChange={handleInputChange} name="tipo" className="w-full p-2 border rounded text-sm"/></div>
+                                                        <div><label className="text-xs font-bold text-slate-500 block mb-1">Capacidade (mL)</label><input placeholder="Ex: 100" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-sm"/></div>
+                                                    </div>
+                                                    <div><label className="text-xs font-bold text-slate-500 block mb-1">Erro A (±)</label><input placeholder="mL" value={formData.erroA} onChange={handleInputChange} name="erroA" className="w-full p-2 border rounded text-sm"/></div>
+                                                </div>
+                                            )}
 
-                                    {/* Bureta de Vidro */}
-                                    {formData.subcategoria === 'bureta' && (
-                                        <div className="bg-slate-50 p-3 rounded border border-slate-200 space-y-2">
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div><label className="text-xs font-bold text-slate-500 block mb-1">Tipo</label><input placeholder="Ex: Âmbar" value={formData.tipo} onChange={handleInputChange} name="tipo" className="w-full p-2 border rounded text-sm"/></div>
-                                                <div><label className="text-xs font-bold text-slate-500 block mb-1">Capacidade (mL)</label><input placeholder="Ex: 50" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-sm"/></div>
-                                            </div>
-                                            <div><label className="text-xs font-bold text-slate-500 block mb-1">Divisão (mL)</label><input placeholder="Ex: 0.1" value={formData.divisao} onChange={handleInputChange} name="divisao" className="w-full p-2 border rounded text-sm"/></div>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div><label className="text-xs font-bold text-slate-500 block mb-1">Erro A/AS (±)</label><input placeholder="mL" value={formData.erroA} onChange={handleInputChange} name="erroA" className="w-full p-2 border rounded text-sm"/></div>
-                                                <div><label className="text-xs font-bold text-slate-500 block mb-1">Erro B (±)</label><input placeholder="mL" value={formData.erroB} onChange={handleInputChange} name="erroB" className="w-full p-2 border rounded text-sm"/></div>
-                                            </div>
-                                        </div>
-                                    )}
+                                            {/* Bureta */}
+                                            {formData.subcategoria === 'bureta' && (
+                                                <div className="bg-slate-50 p-3 rounded border border-slate-200 space-y-2">
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div><label className="text-xs font-bold text-slate-500 block mb-1">Tipo</label><input placeholder="Ex: Âmbar" value={formData.tipo} onChange={handleInputChange} name="tipo" className="w-full p-2 border rounded text-sm"/></div>
+                                                        <div><label className="text-xs font-bold text-slate-500 block mb-1">Capacidade (mL)</label><input placeholder="Ex: 50" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-sm"/></div>
+                                                    </div>
+                                                    <div><label className="text-xs font-bold text-slate-500 block mb-1">Divisão (mL)</label><input placeholder="Ex: 0.1" value={formData.divisao} onChange={handleInputChange} name="divisao" className="w-full p-2 border rounded text-sm"/></div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div><label className="text-xs font-bold text-slate-500 block mb-1">Erro A/AS (±)</label><input placeholder="mL" value={formData.erroA} onChange={handleInputChange} name="erroA" className="w-full p-2 border rounded text-sm"/></div>
+                                                        <div><label className="text-xs font-bold text-slate-500 block mb-1">Erro B (±)</label><input placeholder="mL" value={formData.erroB} onChange={handleInputChange} name="erroB" className="w-full p-2 border rounded text-sm"/></div>
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                    {/* Proveta */}
-                                    {formData.subcategoria === 'proveta' && (
-                                        <div className="bg-green-50 p-3 rounded border border-green-200 space-y-3">
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div><label className="text-xs font-bold text-green-800 block mb-1">Capacidade</label><input placeholder="mL" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-xs"/></div>
-                                                <div><label className="text-xs font-bold text-green-800 block mb-1">Divisão</label><input placeholder="mL" value={formData.divisao} onChange={handleInputChange} name="divisao" className="w-full p-2 border rounded text-xs"/></div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div><label className="text-xs font-bold text-green-800 block mb-1">Erro Máx</label><input placeholder="±" value={formData.erro} onChange={handleInputChange} name="erro" className="w-full p-2 border rounded text-xs"/></div>
-                                                <div><label className="text-xs font-bold text-green-800 block mb-1">Forma</label><select name="forma" value={formData.forma} onChange={handleInputChange} className="w-full p-2 border rounded text-xs bg-white"><option value="alta">Alta</option><option value="baixa">Baixa</option></select></div>
-                                            </div>
-                                        </div>
-                                    )}
+                                            {/* Proveta */}
+                                            {formData.subcategoria === 'proveta' && (
+                                                <div className="bg-green-50 p-3 rounded border border-green-200 space-y-3">
+                                                    <div><label className="text-xs font-bold text-green-800 block mb-1">Tipo</label><input placeholder="Ex: Vidro" value={formData.tipo} onChange={handleInputChange} name="tipo" className="w-full p-2 border rounded text-xs"/></div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div><label className="text-xs font-bold text-green-800 block mb-1">Capacidade</label><input placeholder="mL" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-xs"/></div>
+                                                        <div><label className="text-xs font-bold text-green-800 block mb-1">Divisão</label><input placeholder="mL" value={formData.divisao} onChange={handleInputChange} name="divisao" className="w-full p-2 border rounded text-xs"/></div>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div><label className="text-xs font-bold text-green-800 block mb-1">Erro (Forma Alta)</label><input placeholder="±" value={formData.erroAlta} onChange={handleInputChange} name="erroAlta" className="w-full p-2 border rounded text-xs"/></div>
+                                                        <div><label className="text-xs font-bold text-green-800 block mb-1">Erro (Forma Baixa)</label><input placeholder="±" value={formData.erroBaixa} onChange={handleInputChange} name="erroBaixa" className="w-full p-2 border rounded text-xs"/></div>
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                    {/* Cone Imhoff */}
-                                    {formData.subcategoria === 'imhoff' && (
-                                        <div className="bg-amber-50 p-3 rounded border border-amber-200">
-                                            <div className="mb-2"><label className="text-xs font-bold text-amber-800 block mb-1">Capacidade</label><input placeholder="mL" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-xs"/></div>
-                                            <div className="bg-white p-2 rounded text-xs space-y-2 border border-amber-100">
-                                                <label className="font-bold text-amber-800">Faixas de Calibração:</label>
-                                                {formData.imhoffPoints.map((pt, i) => (
-                                                    <div key={i} className="flex gap-1 items-center"><span className="text-slate-400 font-mono">{i+1}.</span><input value={pt} onChange={(e)=>handleImhoffChange(i, e.target.value)} className="flex-1 border-b border-slate-200 outline-none p-1"/><button type="button" onClick={()=>removeImhoffPoint(i)} className="text-red-400 hover:text-red-600 font-bold">x</button></div>
-                                                ))}
-                                                <button type="button" onClick={addImhoffPoint} className="text-amber-600 font-bold mt-1 block">+ Adicionar Faixa</button>
-                                            </div>
-                                        </div>
-                                    )}
+                                            {/* Imhoff */}
+                                            {formData.subcategoria === 'imhoff' && (
+                                                <div className="bg-amber-50 p-3 rounded border border-amber-200">
+                                                    <div className="grid grid-cols-2 gap-2 mb-2">
+                                                        <div><label className="text-xs font-bold text-amber-800 block mb-1">Tipo</label><input placeholder="Ex: Plástico" value={formData.tipo} onChange={handleInputChange} name="tipo" className="w-full p-2 border rounded text-xs"/></div>
+                                                        <div><label className="text-xs font-bold text-amber-800 block mb-1">Capacidade</label><input placeholder="mL" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-xs"/></div>
+                                                    </div>
+                                                    <div className="bg-white p-2 rounded text-xs space-y-2 border border-amber-100">
+                                                        <label className="font-bold text-amber-800">Faixas de Calibração:</label>
+                                                        {formData.imhoffPoints.map((pt, i) => (
+                                                            <div key={i} className="flex gap-1 items-center"><span className="text-slate-400 font-mono">{i+1}.</span><input value={pt} onChange={(e)=>handleImhoffChange(i, e.target.value)} className="flex-1 border-b border-slate-200 outline-none p-1"/><button type="button" onClick={()=>removeImhoffPoint(i)} className="text-red-400 hover:text-red-600 font-bold">x</button></div>
+                                                        ))}
+                                                        <button type="button" onClick={addImhoffPoint} className="text-amber-600 font-bold mt-1 block">+ Adicionar Faixa</button>
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                    {/* Customizado */}
-                                    {formData.subcategoria === 'custom' && (
-                                         <div className="grid grid-cols-2 gap-2">
-                                            <div><label className="text-xs font-bold text-slate-500 block mb-1">Tipo/Classe</label><input placeholder="Ex: A" value={formData.tipo} onChange={handleInputChange} name="tipo" className="w-full p-2 border rounded text-sm"/></div>
-                                            <div><label className="text-xs font-bold text-slate-500 block mb-1">Capacidade</label><input placeholder="mL" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-sm"/></div>
-                                        </div>
+                                            {/* Custom */}
+                                            {formData.subcategoria === 'custom' && (
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div><label className="text-xs font-bold text-slate-500 block mb-1">Tipo</label><input placeholder="Ex: A" value={formData.tipo} onChange={handleInputChange} name="tipo" className="w-full p-2 border rounded text-sm"/></div>
+                                                    <div><label className="text-xs font-bold text-slate-500 block mb-1">Capacidade</label><input placeholder="mL" value={formData.capacidade} onChange={handleInputChange} name="capacidade" className="w-full p-2 border rounded text-sm"/></div>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
 
                                     {formData.categoria === 'vidraria' && <div><label className="text-xs font-bold text-slate-500 block mb-1">Quantidade</label><input type="number" placeholder="1" value={formData.quantidade} onChange={handleInputChange} name="quantidade" className="w-full p-2 border rounded text-sm"/></div>}
@@ -629,8 +622,7 @@
                                                             {item.subcategoria === 'proveta' && (
                                                                 <div className="grid grid-cols-2 gap-1">
                                                                     <div>Div: <b>{item.divisao}</b></div>
-                                                                    <div>Erro: <b>±{item.erro}</b></div>
-                                                                    <div className="col-span-2">Forma: {item.forma}</div>
+                                                                    <div className="col-span-2">Alta: <b>±{item.erroAlta}</b> | Baixa: <b>±{item.erroBaixa}</b></div>
                                                                 </div>
                                                             )}
                                                             {item.subcategoria === 'imhoff' && (
