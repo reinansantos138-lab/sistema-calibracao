@@ -36,28 +36,33 @@
         };
 
         // Inicializa Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
 
-        // Expõe para o React (Global)
-        window.firebase = {
-            db,
-            auth,
-            signInAnonymously,
-            onAuthStateChanged,
-            collection,
-            addDoc,
-            onSnapshot,
-            deleteDoc,
-            doc,
-            updateDoc,
-            query,
-            orderBy
-        };
-        
-        // Dispara evento para avisar o React que o Firebase está pronto
-        window.dispatchEvent(new Event('firebase-ready'));
+            // Expõe para o React (Global)
+            window.firebase = {
+                db,
+                auth,
+                signInAnonymously,
+                onAuthStateChanged,
+                collection,
+                addDoc,
+                onSnapshot,
+                deleteDoc,
+                doc,
+                updateDoc,
+                query,
+                orderBy
+            };
+            
+            // Dispara evento para avisar o React que o Firebase está pronto
+            window.dispatchEvent(new Event('firebase-ready'));
+        } catch (e) {
+            console.error("Erro crítico na inicialização do Firebase:", e);
+            window.firebaseError = e.message;
+        }
     </script>
 
     <style>
@@ -82,12 +87,14 @@
         const Save = () => <Icon className="w-4 h-4"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></Icon>;
         const Plus = () => <Icon className="w-4 h-4"><path d="M5 12h14"/><path d="M12 5v14"/></Icon>;
         const X = () => <Icon className="w-4 h-4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></Icon>;
+        const AlertTriangle = () => <Icon className="w-5 h-5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></Icon>;
 
         const IMHOFF_DEFAULTS = ["0,1ml a 2,0 ml", "2,0ml a 10,0ml", "10,0ml a 40,0ml", "40,0ml a 100,00ml", "100,0ml a 1000,0ml"];
 
         const App = () => {
             const [items, setItems] = React.useState([]);
             const [status, setStatus] = React.useState("Carregando sistema...");
+            const [errorMsg, setErrorMsg] = React.useState(null);
             const [isOnline, setIsOnline] = React.useState(false);
             const [user, setUser] = React.useState(null);
 
@@ -96,6 +103,10 @@
             // --- LÓGICA DE CONEXÃO FIREBASE ---
             React.useEffect(() => {
                 const initApp = async () => {
+                    if (window.firebaseError) {
+                         setErrorMsg(`Erro de Configuração: ${window.firebaseError}`);
+                         return;
+                    }
                     if (!window.firebase) {
                         setStatus("Aguardando Firebase...");
                         return;
@@ -104,28 +115,42 @@
                     const { auth, db, signInAnonymously, onAuthStateChanged, collection, query, orderBy, onSnapshot } = window.firebase;
 
                     try {
-                        // 1. Autenticação Anônima (Necessária para acessar o banco com segurança básica)
+                        // 1. Autenticação Anônima
                         setStatus("Autenticando...");
-                        await signInAnonymously(auth);
+                        try {
+                            await signInAnonymously(auth);
+                        } catch (authErr) {
+                            console.error("Erro no Login Anônimo:", authErr);
+                            if (authErr.code === 'auth/configuration-not-found' || authErr.code === 'auth/operation-not-allowed' || authErr.code === 'auth/admin-restricted-operation') {
+                                setErrorMsg("AÇÃO NECESSÁRIA: Ative o 'Login Anônimo' no Firebase Console em Authentication > Sign-in method.");
+                                setStatus("Erro de Configuração");
+                                return;
+                            }
+                            throw authErr;
+                        }
 
                         onAuthStateChanged(auth, (u) => {
                             if (u) {
                                 setUser(u);
                                 setIsOnline(true);
                                 setStatus("Sincronizando dados...");
+                                setErrorMsg(null);
 
                                 // 2. Conectar ao Banco de Dados (Firestore)
-                                // Caminho: artifacts -> [ID_DO_APP] -> public -> data -> items
                                 const itemsRef = collection(db, 'artifacts', appId, 'public', 'data', 'items');
                                 const q = query(itemsRef, orderBy("createdAt", "desc"));
 
                                 const unsubscribe = onSnapshot(q, (snapshot) => {
                                     const loadedItems = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                                     setItems(loadedItems);
-                                    setStatus(""); // Limpa status quando carrega
+                                    setStatus(""); 
                                 }, (error) => {
                                     console.error("Erro no listener:", error);
-                                    setStatus("Erro de permissão ou conexão.");
+                                    if (error.code === 'permission-denied') {
+                                         setErrorMsg("Permissão Negada: Verifique se as Regras do Firestore estão em modo de teste (público).");
+                                    } else {
+                                         setStatus("Erro de conexão com banco de dados.");
+                                    }
                                     setIsOnline(false);
                                 });
 
@@ -136,8 +161,9 @@
                             }
                         });
                     } catch (err) {
-                        console.error("Erro na inicialização:", err);
+                        console.error("Erro geral na inicialização:", err);
                         setStatus("Erro ao conectar no Firebase.");
+                        setErrorMsg(err.message);
                     }
                 };
 
@@ -198,7 +224,7 @@
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
-                if (!user) return alert("Aguarde a conexão com o banco de dados.");
+                if (!user) return alert("Erro: Não conectado ao banco de dados.");
 
                 let finalName = formData.nome;
                 let finalSub = formData.subcategoria;
@@ -211,7 +237,7 @@
                     ...formData, 
                     subcategoria: finalSub, 
                     nome: finalName,
-                    userId: user.uid, // Registra quem criou (opcional)
+                    userId: user.uid, 
                     createdAt: Date.now() 
                 };
 
@@ -219,20 +245,17 @@
                 
                 try {
                     if (editingId) {
-                        // Atualizar
                         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', editingId);
                         await updateDoc(docRef, itemToSave);
                         setEditingId(null);
                     } else {
-                        // Criar Novo
                         const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'items');
                         await addDoc(colRef, itemToSave);
                     }
-                    // Resetar form
                     setFormData({ ...initialFormState, categoria: formData.categoria, subcategoria: formData.subcategoria });
                 } catch (error) {
                     console.error("Erro ao salvar:", error);
-                    alert("Erro ao salvar. Verifique se o banco de dados está no 'Modo Teste' ou se você tem permissão.");
+                    alert("Erro ao salvar. Verifique se o banco de dados está no 'Modo Teste'.");
                 }
             };
 
@@ -328,14 +351,25 @@
             return (
                 <div className="min-h-screen p-4 md:p-8 font-sans pb-24 max-w-7xl mx-auto">
                     
-                    {/* Status Bar */}
-                    {status && (
-                        <div className="fixed top-0 left-0 w-full bg-yellow-100 text-yellow-800 text-center text-xs py-1 z-50">
+                    {/* Mensagem de Erro Crítico (Ex: Auth não configurado) */}
+                    {errorMsg && (
+                        <div className="fixed top-0 left-0 w-full bg-red-600 text-white p-4 z-50 shadow-lg flex items-center justify-center gap-3">
+                            <AlertTriangle className="text-white w-8 h-8" />
+                            <div>
+                                <p className="font-bold text-lg">Atenção: Configuração Necessária</p>
+                                <p className="text-sm">{errorMsg}</p>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Status Bar (Normal) */}
+                    {status && !errorMsg && (
+                        <div className="fixed top-0 left-0 w-full bg-yellow-100 text-yellow-800 text-center text-xs py-1 z-40">
                             {status}
                         </div>
                     )}
 
-                    <header className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 mb-6 mt-4">
+                    <header className={`bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 mb-6 ${errorMsg ? 'mt-16' : 'mt-4'}`}>
                         <div className="flex items-center gap-3">
                             <div className="bg-slate-800 p-3 rounded-lg text-white"><Beaker /></div>
                             <div>
